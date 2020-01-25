@@ -390,6 +390,12 @@ defmodule Ecto.Query.Builder do
     {escape_var!(var, vars), params_acc}
   end
 
+  def escape({{:., _, [Access, :get]}, _, _} = expr, type, params_acc, vars, env) do
+    {expr, path} = parse_access_get(expr, [])
+    {expr, params_acc} = escape(expr, type, params_acc, vars, env)
+    {{:{}, [], [:json_get, [], [expr, path]]}, params_acc}
+  end
+
   # Raise nice error messages for fun calls.
   def escape({fun, _, args} = other, _type, _params_acc, _vars, _env)
       when is_atom(fun) and is_list(args) do
@@ -1064,4 +1070,13 @@ defmodule Ecto.Query.Builder do
     do: {:%{}, [], Map.to_list(query)}
   defp escape_query(other),
     do: other
+
+  defp parse_access_get({{:., _, [Access, :get]}, _, [left, right]}, acc) do
+    parse_access_get(left, [right | acc])
+  end
+
+  defp parse_access_get({{:., _, [{var, _, context}, field]}, _, []} = expr, acc)
+       when is_atom(var) and is_atom(context) and is_atom(field) do
+    {expr, acc}
+  end
 end

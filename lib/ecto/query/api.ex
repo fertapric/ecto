@@ -452,6 +452,14 @@ defmodule Ecto.Query.API do
   def merge(left_map, right_map), do: doc! [left_map, right_map]
 
   @doc """
+  Gets value in a JSON field.
+
+      from(post in Post, select: post.author["name"])
+
+  """
+  def json_get(json, field), do: doc! [json, field]
+
+  @doc """
   Casts the given value to the given type at the database level.
 
   Most of the times, Ecto is able to proper cast interpolated
