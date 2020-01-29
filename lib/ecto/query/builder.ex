@@ -97,7 +97,7 @@ defmodule Ecto.Query.Builder do
     escape_with_type(expr, type, params_acc, vars, env)
   end
 
-  def escape({:type, _, [{:field, _, [_ | _]} = expr, type]}, _type, params_acc, vars, env) do
+  def escape({:type, _, [expr, type]}, _type, params_acc, vars, env) do
     escape_with_type(expr, type, params_acc, vars, env)
   end
 
@@ -392,13 +392,6 @@ defmodule Ecto.Query.Builder do
 
   def escape({{:., _, [Access, :get]}, _, _} = expr, type, params_acc, vars, env) do
     {expr, path} = parse_access_get(expr, [])
-    {expr, params_acc} = escape(expr, type, params_acc, vars, env)
-    {{:{}, [], [:json_get, [], [expr, path]]}, params_acc}
-  end
-
-  def escape({{:., _, [_, field]}, _, []} = expr, type, params_acc, vars, env)
-      when is_atom(field) do
-    {expr, path} = parse_embed_get(expr, [])
     {expr, params_acc} = escape(expr, type, params_acc, vars, env)
     {{:{}, [], [:json_get, [], [expr, path]]}, params_acc}
   end
@@ -1092,15 +1085,5 @@ defmodule Ecto.Query.Builder do
   defp parse_access_get({{:., _, [{var, _, context}, field]}, _, []} = expr, acc)
        when is_atom(var) and is_atom(context) and is_atom(field) do
     {expr, acc}
-  end
-
-  defp parse_embed_get({{:., _, [{var, _, context}, field]}, _, []} = expr, acc)
-       when is_atom(var) and is_atom(context) and is_atom(field) do
-    {expr, acc}
-  end
-
-  defp parse_embed_get({{:., _, [left, right]}, _, []}, acc)
-       when is_atom(right) do
-    parse_embed_get(left, [right | acc])
   end
 end
