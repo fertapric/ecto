@@ -270,6 +270,8 @@ defmodule Ecto.Integration.TypeTest do
     assert TestRepo.one(from o in Order, select: o.item["bad"]["bad"]) == nil
     # TODO:
     # assert TestRepo.one(from o in Order, select: o.item["valid_at"]) == item.valid_at
+    # TODO:
+    # assert TestRepo.one(from o in Order, select: type(o.item["valid_at"], :time)) == item.valid_at
 
     assert TestRepo.one(from o in Order, select: o.item.price) == item.price
     # TODO:
