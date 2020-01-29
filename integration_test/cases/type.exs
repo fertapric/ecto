@@ -263,6 +263,21 @@ defmodule Ecto.Integration.TypeTest do
     assert item.valid_at == dbitem.valid_at
     assert dbitem.id
 
+    assert TestRepo.one(from o in Order, select: o.item["price"]) == item.price
+    field = "price"
+    assert TestRepo.one(from o in Order, select: o.item[field]) == item.price
+    assert TestRepo.one(from o in Order, select: o.item["bad"]) == nil
+    assert TestRepo.one(from o in Order, select: o.item["bad"]["bad"]) == nil
+    # TODO:
+    # assert TestRepo.one(from o in Order, select: o.item["valid_at"]) == item.valid_at
+
+    assert TestRepo.one(from o in Order, select: o.item.price) == item.price
+    # TODO:
+    # assert TestRepo.one(from o in Order, select: o.item.bad)
+    # assert TestRepo.one(from o in Order, select: o.item.bad.bad)
+    # TODO:
+    # assert TestRepo.one(from o in Order, select: o.item.valid_at) == item.valid_at
+
     {1, _} = TestRepo.update_all(Order, set: [item: %{dbitem | price: 456}])
     assert TestRepo.get!(Order, order.id).item.price == 456
   end
