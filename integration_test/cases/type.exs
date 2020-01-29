@@ -270,15 +270,17 @@ defmodule Ecto.Integration.TypeTest do
     assert TestRepo.one(from o in Order, select: o.item["bad"]["bad"]) == nil
     # TODO:
     # assert TestRepo.one(from o in Order, select: o.item["valid_at"]) == item.valid_at
-    # TODO:
     # assert TestRepo.one(from o in Order, select: type(o.item["valid_at"], :time)) == item.valid_at
+    # assert inspect(from(o in Order, select: o.item["price"])) ==
+    #          "#Ecto.Query<from o0 in Ecto.Integration.Order, select: o0.item[\"price\"]>"
 
     assert TestRepo.one(from o in Order, select: o.item.price) == item.price
     # TODO:
     # assert TestRepo.one(from o in Order, select: o.item.bad)
     # assert TestRepo.one(from o in Order, select: o.item.bad.bad)
-    # TODO:
     # assert TestRepo.one(from o in Order, select: o.item.valid_at) == item.valid_at
+    # assert inspect(from(o in Order, select: o.item.price)) ==
+    #          "#Ecto.Query<from o0 in Ecto.Integration.Order, select: o0.item.price>"
 
     {1, _} = TestRepo.update_all(Order, set: [item: %{dbitem | price: 456}])
     assert TestRepo.get!(Order, order.id).item.price == 456

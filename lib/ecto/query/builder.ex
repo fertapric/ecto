@@ -1052,6 +1052,7 @@ defmodule Ecto.Query.Builder do
   """
   def apply_query(query, module, args, env) do
     query = Macro.expand(query, env)
+
     case unescape_query(query) do
       %Query{} = unescaped ->
         apply(module, :apply, [unescaped|args]) |> escape_query
