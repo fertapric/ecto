@@ -191,6 +191,17 @@ defmodule Ecto.Query.Builder do
     {{:{}, [], [:date_add, [], [date, count, interval]]}, params_acc}
   end
 
+  # json
+  def escape({:json_get, _, [expr, path]}, type, params_acc, vars, env) do
+    {expr, params_acc} = escape(expr, type, params_acc, vars, env)
+    {{:{}, [], [:json_get, [], [expr, path]]}, params_acc}
+  end
+
+  def escape({{:., meta, [Access, :get]}, _, _} = expr, type, params_acc, vars, env) do
+    {expr, path} = parse_access_get(expr, [])
+    escape({:json_get, meta, [expr, path]}, type, params_acc, vars, env)
+  end
+
   # sigils
   def escape({name, _, [_, []]} = sigil, type, params_acc, vars, _env)
       when name in ~w(sigil_s sigil_S sigil_w sigil_W)a do
@@ -388,12 +399,6 @@ defmodule Ecto.Query.Builder do
   # Finally handle vars
   def escape({var, _, context}, _type, params_acc, vars, _env) when is_atom(var) and is_atom(context) do
     {escape_var!(var, vars), params_acc}
-  end
-
-  def escape({{:., _, [Access, :get]}, _, _} = expr, type, params_acc, vars, env) do
-    {expr, path} = parse_access_get(expr, [])
-    {expr, params_acc} = escape(expr, type, params_acc, vars, env)
-    {{:{}, [], [:json_get, [], [expr, path]]}, params_acc}
   end
 
   # Raise nice error messages for fun calls.
