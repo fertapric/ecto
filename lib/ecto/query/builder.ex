@@ -192,14 +192,15 @@ defmodule Ecto.Query.Builder do
   end
 
   # json
-  def escape({:json_get, _, [expr, path]}, type, params_acc, vars, env) do
+  def escape({:json_extract_path, _, [expr, path]}, type, params_acc, vars, env) do
+    path = Enum.map(path, &quoted_json_path_element!/1)
     {expr, params_acc} = escape(expr, type, params_acc, vars, env)
-    {{:{}, [], [:json_get, [], [expr, path]]}, params_acc}
+    {{:{}, [], [:json_extract_path, [], [expr, path]]}, params_acc}
   end
 
   def escape({{:., meta, [Access, :get]}, _, _} = expr, type, params_acc, vars, env) do
     {expr, path} = parse_access_get(expr, [])
-    escape({:json_get, meta, [expr, path]}, type, params_acc, vars, env)
+    escape({:json_extract_path, meta, [expr, path]}, type, params_acc, vars, env)
   end
 
   # sigils
@@ -822,7 +823,7 @@ defmodule Ecto.Query.Builder do
   def quoted_field!(atom) when is_atom(atom),
     do: atom
   def quoted_field!(other),
-    do: error!("expected literal atom or interpolated value in field/2, got: `#{inspect other}`")
+    do: error!("expected literal atom or interpolated value in field/2, got: `#{Macro.to_string(other)}`")
 
   @doc """
   Called by escaper at runtime to verify that value is an atom.
@@ -831,6 +832,31 @@ defmodule Ecto.Query.Builder do
     do: atom
   def field!(other),
     do: error!("expected atom in field/2, got: `#{inspect other}`")
+
+  @doc """
+  Checks if the path element is a string at compilation time or
+  delegate the check to runtime for interpolation.
+  """
+  def quoted_json_path_element!({:^, _, [expr]}),
+    do: quote(do: Ecto.Query.Builder.json_path_element!(unquote(expr)))
+
+  def quoted_json_path_element!(binary) when is_binary(binary),
+    do: binary
+
+  def quoted_json_path_element!(other),
+    do:
+      error!(
+        "expected JSON path to contain literal strings or interpolated values, got: " <>
+        "`#{Macro.to_string(other)}`"
+      )
+
+  @doc """
+  Called by escaper at runtime to verify that value is a string.
+  """
+  def json_path_element!(binary) when is_binary(binary),
+    do: binary
+  def json_path_element!(other),
+    do: error!("expected string in json_extract_path/2, got: `#{inspect other}`")
 
   @doc """
   Called by escaper at runtime to verify that a value is not nil.

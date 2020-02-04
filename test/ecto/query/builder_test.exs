@@ -38,6 +38,14 @@ defmodule Ecto.Query.BuilderTest do
            |> elem(0)
            |> Code.eval_quoted([], __ENV__)
            |> elem(0)
+
+    expected = {Macro.escape(quote do: json_extract_path(&0.y(), ["a", "b"])), []}
+    actual = escape(quote do x.y["a"]["b"] end, [x: 0], __ENV__)
+    assert actual == expected
+
+    assert_raise Ecto.Query.CompileError, ~r/expected JSON path to contain.*got: `a`/, fn ->
+      escape(quote do x.y[a] end, [x: 0], __ENV__)
+    end
   end
 
   test "escape fragments" do

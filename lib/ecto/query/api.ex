@@ -452,12 +452,16 @@ defmodule Ecto.Query.API do
   def merge(left_map, right_map), do: doc! [left_map, right_map]
 
   @doc """
-  Gets value in a JSON field.
+  Returns value from the `json_field` pointed to by `path`.
 
-      from(post in Post, select: post.author["name"])
+      from(post in Post, select: json_extract_path(post.metadata, ["author", "name"]))
+
+  The query can be also rewritten as:
+
+      from(post in Post, select: post.metadata["author"]["name"])
 
   """
-  def json_get(json, field), do: doc! [json, field]
+  def json_extract_path(json_field, path), do: doc! [json_field, path]
 
   @doc """
   Casts the given value to the given type at the database level.

@@ -263,18 +263,30 @@ defmodule Ecto.Integration.TypeTest do
     assert item.valid_at == dbitem.valid_at
     assert dbitem.id
 
+    {1, _} = TestRepo.update_all(Order, set: [item: %{dbitem | price: 456}])
+    assert TestRepo.get!(Order, order.id).item.price == 456
+  end
+
+  @tag :json_extract_path
+  test "json_extract_path" do
+    item = %Item{price: 123, valid_at: ~D[2014-01-16]}
+
+    %Order{}
+    |> Ecto.Changeset.change()
+    |> Ecto.Changeset.put_embed(:item, item)
+    |> TestRepo.insert!()
+
     assert TestRepo.one(from o in Order, select: o.item["price"]) == item.price
-    field = "price"
-    assert TestRepo.one(from o in Order, select: o.item[field]) == item.price
     assert TestRepo.one(from o in Order, select: o.item["bad"]) == nil
     assert TestRepo.one(from o in Order, select: o.item["bad"]["bad"]) == nil
+
+    field = "price"
+    assert TestRepo.one(from o in Order, select: o.item[^field]) == item.price
+
     # TODO:
     # assert TestRepo.one(from o in Order, select: type(o.item["valid_at"], :time)) == item.valid_at
     # assert inspect(from(o in Order, select: o.item["price"])) ==
     #          "#Ecto.Query<from o0 in Ecto.Integration.Order, select: o0.item[\"price\"]>"
-
-    {1, _} = TestRepo.update_all(Order, set: [item: %{dbitem | price: 456}])
-    assert TestRepo.get!(Order, order.id).item.price == 456
   end
 
   @tag :map_type
