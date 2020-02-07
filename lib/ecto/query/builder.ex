@@ -193,7 +193,7 @@ defmodule Ecto.Query.Builder do
 
   # json
   def escape({:json_extract_path, _, [expr, path]}, type, params_acc, vars, env) do
-    path = Enum.map(path, &quoted_json_path_element!/1)
+    {path, params_acc} = escape_json_path(path, params_acc)
     {expr, params_acc} = escape(expr, type, params_acc, vars, env)
     {{:{}, [], [:json_extract_path, [], [expr, path]]}, params_acc}
   end
@@ -833,9 +833,34 @@ defmodule Ecto.Query.Builder do
   def field!(other),
     do: error!("expected atom in field/2, got: `#{inspect other}`")
 
+  defp escape_json_path(path, params_acc) do
+    # path = Enum.map(path, &quoted_json_path_element!/1)
+    # {path, params_acc}
+
+    Enum.reduce(path, {[], params_acc}, fn
+      segment, {segments, params} when is_binary(segment) ->
+        {[segment | segments], params}
+
+      {:^, _, [expr]}, {segments, {params, acc}} ->
+        segment = quote(do: Ecto.Query.Builder.json_path_element!(unquote(expr)))
+
+        expr = {:{}, [], [:^, [], [length(params)]]}
+        type = :any
+        params = [{expr, type} | params]
+
+        {[segment | segments], {params, acc}}
+
+      other, _ ->
+        error!(
+          "expected JSON path to contain literal strings or interpolated values, got: " <>
+          "`#{Macro.to_string(other)}`"
+        )
+    end)
+  end
+
   @doc """
-  Checks if the path element is a string at compilation time or
-  delegate the check to runtime for interpolation.
+  Checks if the path element is a string at compilation time and then add it as to query 
+  or delegate the check to runtime for interpolation and make it a param.
   """
   def quoted_json_path_element!({:^, _, [expr]}),
     do: quote(do: Ecto.Query.Builder.json_path_element!(unquote(expr)))

@@ -276,17 +276,21 @@ defmodule Ecto.Integration.TypeTest do
     |> Ecto.Changeset.put_embed(:item, item)
     |> TestRepo.insert!()
 
+    # Logger.configure(level: :debug)
+    # assert TestRepo.one(from o in Post, select: o.meta["price"], where: o.cost > ^123) == 42
+
     assert TestRepo.one(from o in Order, select: o.item["price"]) == item.price
-    assert TestRepo.one(from o in Order, select: o.item["bad"]) == nil
-    assert TestRepo.one(from o in Order, select: o.item["bad"]["bad"]) == nil
+
+    # assert TestRepo.one(from o in Order, select: o.item["bad"]) == nil
+    # assert TestRepo.one(from o in Order, select: o.item["bad"]["bad"]) == nil
 
     field = "price"
     assert TestRepo.one(from o in Order, select: o.item[^field]) == item.price
 
     # TODO:
-    # assert TestRepo.one(from o in Order, select: type(o.item["valid_at"], :time)) == item.valid_at
-    # assert inspect(from(o in Order, select: o.item["price"])) ==
-    #          "#Ecto.Query<from o0 in Ecto.Integration.Order, select: o0.item[\"price\"]>"
+    # assert TestRepo.one(from o in Order, select: o.item["';"]) == item.price
+
+    # assert TestRepo.one(from o in Order, select: type(o.item["price"], :string)) == "123"
   end
 
   @tag :map_type
